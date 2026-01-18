@@ -1,3 +1,3 @@
-# chai aur backend series
+# backend project in javascript
 
-this is backend project in javscript 
+this is backend project in javascript 
