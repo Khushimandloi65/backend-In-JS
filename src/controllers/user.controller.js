@@ -19,8 +19,11 @@ const registerUser = asyncHandler( async (req, res) => {
 
     // 1. taking user data 
     
-    const {fullname , email , username , password } = req.body
-    console.log("email: ", email);
+    // console.log("req.body: ", req.body);
+
+    const {fullName , email , username , password } = req.body
+    
+    // console.log("email: ", email);
 
     // 2. validations
 
@@ -31,15 +34,15 @@ const registerUser = asyncHandler( async (req, res) => {
     // checking are fields empty 
 
     if (
-        [fullname , email , username , password].some((field)=>field?.trim()==="")
+        [fullName , email , username , password].some((field)=>field?.trim()==="")
     ){
          throw new ApiError(400,"All fields are required")
     }
 
     // 3. checking if user already exists
 
-    const existedUser = User.findOne({
-    $or : [ { username } , { error } ]
+    const existedUser = await User.findOne({
+    $or : [ { username } , { email } ]
     })
 
     if (existedUser){
@@ -48,13 +51,22 @@ const registerUser = asyncHandler( async (req, res) => {
 
     // 4. check for images
 
+    // console.log("req.files: ", req.files);
+   
     const avatarLocalPath = req.files?.avatar[0]?.path;
-    const coverImageLocalPath = req.files?.coverImage[0]?.path;
-
-    // check for avatar
-    if (!avatarLocalPath){
+     if (!avatarLocalPath){
         throw new ApiError(400,"avatar file is required")
     }
+    
+    // const coverImageLocalPath = req.files?.coverImage[0]?.path;
+
+    let coverImageLocalPath;
+    if(req.files && Array.isArray(req.files.coverImage) && req.files.coverImage.length > 0){
+        coverImageLocalPath = req.files.coverImage[0].path;              // check for coverimage
+    }
+
+    // check for avatar
+   
 
     // 5. upload on cloudinary
 
@@ -70,9 +82,9 @@ const registerUser = asyncHandler( async (req, res) => {
     // 6. create user object
 
     const user = await User.create({
-        fullname , 
+        fullName , 
         avatar : avatar.url,
-        coverimage: coverImage?.url || "",
+        coverImage: coverImage?.url || "",
         email,
         password,
         username: username.toLowerCase()
@@ -80,7 +92,7 @@ const registerUser = asyncHandler( async (req, res) => {
 
     // 7 check for user creation and removing password and refresh token field
 
-    const createdUser = await User.findById(user._id).select("-password -refreshToken");
+    const createdUser = await User.findById(user._id).select(" -refreshToken");
 
     // 8 check for user creation
 
@@ -96,8 +108,5 @@ const registerUser = asyncHandler( async (req, res) => {
 
 
 });
-
-
-
 
 export {registerUser};
