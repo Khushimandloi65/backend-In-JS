@@ -3,7 +3,8 @@ import { ApiError } from "../utils/ApiError.js";
 import { User } from "../models/user.model.js";
 import { uploadOnCloudinary } from "../utils/cloudinary.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
-import jwt from "jsonwebtoken"; 
+import jwt from "jsonwebtoken";
+import mongoose from "mongoose" ;
 
 const registerUser = asyncHandler ( async (req, res) => {
    
@@ -52,8 +53,12 @@ const registerUser = asyncHandler ( async (req, res) => {
     // 4. check for images
 
     // console.log("req.files: ", req.files);
+
    
+    
+
     const avatarLocalPath = req.files?.avatar[0]?.path;
+
      if (!avatarLocalPath){
         throw new ApiError(400,"avatar file is required")
     }
@@ -207,8 +212,8 @@ const logoutUser = asyncHandler ( async(req,res) => {``
      await User.findByIdAndUpdate(
       req.user._id, 
         {
-            $set: {
-                refreshToken : null
+            $unset: {
+                refreshToken : 1
             }
         },
         {
@@ -325,8 +330,11 @@ const updateAccoutDetails = asyncHandler(async(req,res)=>{
         .json(new ApiResponse(200,user,"Account details update successfully"))
 })
 
-const updateUserAvatar = asyncHandler ( async(res,req)=>{
+const updateUserAvatar = asyncHandler ( async(req,res)=>{
     const avatarLocalPath = req.file?.path
+
+    console.log("file:", req.file);
+
 
     if (!avatarLocalPath){
         throw new ApiError(400,"Avatar file is missing")
@@ -347,7 +355,7 @@ const updateUserAvatar = asyncHandler ( async(res,req)=>{
                 avatar:avatar.url
             }
         }, 
-        {new:user}    
+        {new:true}    
     ).select("-password")
 
     return res
@@ -358,7 +366,7 @@ const updateUserAvatar = asyncHandler ( async(res,req)=>{
 
 })
 
-const updateUserCoverImage = asyncHandler ( async(res,req)=>{
+const updateUserCoverImage = asyncHandler ( async(req,res)=>{
     const coverImageLocalPath = req.file?.path
 
     if (!coverImageLocalPath){
@@ -378,7 +386,7 @@ const updateUserCoverImage = asyncHandler ( async(res,req)=>{
                 coverImage: coverImage.url
             }
         },
-        {new:user}    
+        {new:true}    
     ).select("-password")
 
     return res
@@ -389,12 +397,12 @@ const updateUserCoverImage = asyncHandler ( async(res,req)=>{
 
 })
 
-const getUserChannelProfile = asyncHandler ( async(res,req)=>{
+const getUserChannelProfile = asyncHandler ( async(req,res)=>{
 
 
     const {username} = req.params
 
-    if(!username?.trim){
+    if(!username?.trim()){
         throw new ApiError(400,"username is missing")
     }
 
@@ -463,7 +471,7 @@ const getUserChannelProfile = asyncHandler ( async(res,req)=>{
     
 })
 
-const getWatchHistory = asyncHandler(async(res,req)=>{
+const getWatchHistory = asyncHandler(async(req,res)=>{
     const user = await User.aggregate([
         {
             $match:{
